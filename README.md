@@ -1,5 +1,8 @@
 # IDT++ - Extending ID Tokens - Simplifying Issuance of Verifiable Credentials using OpenID Connect
 
+> [!NOTE]
+> This document is a draft and is subject to changes.
+
 ## Introduction
 
 ID Tokens (IDTs), defined as JSON Web Tokens (JWTs) containing claims about authentication events, are widely adopted through the OpenID Connect (OIDC) infrastructure. IDTs have many good properties, such as built-in selective disclosure, option for repudiation and non-repudiation and they don't require revocation. However, since IDTs are typically restricted to a specific audience and have short lifetimes, they are not well-suited for sharing with third parties, such as through digital wallets.
