@@ -2,7 +2,7 @@
 version: 2024-11-20
 ---
 
-# IDT++ - Asynchronous Proof-of-Possession key generation <!-- omit from toc -->
+# IDT++ - Asynchronous Proof-of-Possession Key Generation <!-- omit from toc -->
 
 - [Introduction](#introduction)
 - [ARKG Overview](#arkg-overview)
@@ -18,7 +18,7 @@ version: 2024-11-20
   - [Example](#example)
 - [Derivation of the Proof-of-Possession Private Key](#derivation-of-the-proof-of-possession-private-key)
 
-In this section we define how an authorisation server can derive a proof-of-possession public key for a user without interacting with the user's wallet and without an ability to derive the corresponding secret key.
+In this section we define how an authorisation server can derive a proof-of-possession public key for a user without interacting with the user's wallet and without being able to derive or learn anything about the corresponding secret key.
 
 ## Introduction
 

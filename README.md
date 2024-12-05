@@ -1,19 +1,21 @@
-# IDT++ - Extending ID Tokens - Simplifying Issuance of Verifiable Credentials using OpenID Connect
+# IDT++ - an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI
 
-> [!NOTE]
-> This document is a draft and is subject to changes.
+- Status: draft
+- Version: 2024-12-05
+- Previous version: N/A
+- Proposed: 2024-09-01
 
 ## Introduction
 
-ID Tokens (IDTs), defined as JSON Web Tokens (JWTs) containing claims about authentication events, are widely adopted through the OpenID Connect (OIDC) infrastructure. IDTs have many good properties, such as built-in selective disclosure, option for repudiation and non-repudiation and they don't require revocation. However, since IDTs are typically restricted to a specific audience and have short lifetimes, they are not well-suited for sharing with third parties, such as through digital wallets.
+ID Tokens (IDTs), defined as JSON Web Tokens (JWTs) containing claims about authentication events, are widely adopted through the OpenID Connect (OIDC) infrastructure. IDTs carry many important properties, such as built-in selective disclosure, option for repudiation and non-repudiation and they don't require revocation. However, since IDTs are typically audience-restricted and have short lifetimes, they are not well-suited for sharing with third parties, such as through digital wallets.
 
-Verifiable credentials (VCs) are modelled as long-lived tokens that can be shared with third partied through digital wallets - similar to digitally signed documents, but with an ability to cryptographically prove ownership, selectively disclose information, and verify the identity and accreditations of an issuer. Examples of VCs are driver's licence, diploma, student ID, and other credentials.
+Verifiable credentials (VCs) are typically modelled as long-lived tokens that can be shared with third partied through digital wallets - similar to digitally signed documents, but with an ability to cryptographically prove ownership, selectively disclose information, and verify the identity and accreditations of an issuer. Examples of VCs are mobile driver's licence, digital diploma, digital student ID, and other credentials.
 
-We are introducing ID Token++ (IDT++), an extended IDT profile designed to be issued through OIDC Authorization Servers and having support for cryptographic binding of IDTs to digital wallets, selective disclosure, and identification of issuers using WebPKI. With the IDT++ profile we can start issuing Verifiable Credentials using the existing OIDC infrastructure. Learn how IDT++ simplifies the issuance process building on technologies like Asynchronous Remote Key Generation (ARKG), SD-Cha-Cha, and WebPKI.
+We are introducing an IDT profile: ID Token++ (IDT++), a profile designed for IDT so that they can be issued through OIDC Authorization Servers and having support for cryptographic binding to digital wallets, selective disclosure, and identification of issuers using WebPKI. With the IDT++ profile we can start issuing Verifiable Credentials using the existing OIDC infrastructure. Learn how IDT++ simplifies the issuance process building on technologies like Asynchronous Remote Key Generation (ARKG), SD-Cha-Cha, and WebPKI.
 
 ## Overview
 
-IDT++, in abstract, fits into the OpenID Connect (OIDC) protocol flow as depicted in the diagram below. Steps (1)-(5) are the [abstract OIDC protocol steps](https://openid.net/specs/openid-connect-core-1_0.html#Overview) and steps [a-d] are the additional steps that extend the OIDC flow.
+IDT++ fits into the OpenID Connect (OIDC) protocol flow as depicted in the diagram below. Steps (1)-(5) are the [abstract OIDC protocol steps](https://openid.net/specs/openid-connect-core-1_0.html#Overview) and steps [a-d] are the additional steps that extend the OIDC flow.
 
 ```mermaid
 sequenceDiagram
@@ -23,8 +25,10 @@ sequenceDiagram
   participant op as OpenID Provider<br>OP
   participant ip as IDT++ service<br>OP
 
+  note over eu, op: User connects her wallet (a one-time process)
   eu -->> op: [a.1] Share Master Public Key
   op -->> ip: [a.2] Store Master Public Key
+  note over eu, ip: IDT++ issuance
   rp ->> op: (1) AuthN Request
   op ->> eu: (2) AuthN & AuthZ
   op -->> ip: [b.1] Generate IDT++ Claims
@@ -52,15 +56,13 @@ sequenceDiagram
 
 Step [a] is a one-time process that occurs upon End-User's wallet registration with the OP. If End-User already registered its wallet with the OP, this step can be skipped. Step [b] is a step that's executed for every IDT++ creation. The IDT++ service can be an external service or integrated into the OP's Authorization Server and only generates and adds additional claims to the IDT. Steps [c-d] showcase different ways of how IDT++ can be stored in the wallet - directly, by fetching them from the RP (as storing files) or importing them manually upon receiving them via email or other communication channel.
 
-Once a wallet is registered with the OP, we can introduce a simple, OAuth-protected [credential server](#credential-server), where the Wallet can easily fetch other user credentials.
-
 ## ID Token++
 
-The main change that IDT++ makes to the OIDC to enable End-Users to use the IDTs with their wallet is the extension of the IDT data model. The IDT++ inherits all the claims and security properties of the IDTs. IDT++ introduces four main capabilities:
+The main change that IDT++ makes to the OIDC to enable End-Users to use the IDTs with their wallet is the extension of the IDT data model with additional claims. IDT++ introduces four main capabilities:
 
-- Enable users present their claims to verifiers using their digital wallet - see [Public Key Generation Delegation using ARKG](#public-key-generation-delegation-using-asynchronous-remote-key-generation)
-- Enable users to selectively disclose their claims - see [SD-Cha-Cha](#sd-cha-cha-overview)
-- Enable verifiers to verify the issuer's identity using WebPKI infrastructure - see [Expressing Issuer's Identity using WebPKI](#expressing-issuers-identity-with-webpki)
+- Enables users store their claims in their digital wallets and to present them to verifiers - see [Asynchronous proof-of-possession key derivation](./01_async-pop.md)
+- Enables users to selectively disclose their claims - see [SD-Cha-Cha](./02_sd-cha-cha.md)
+- Enables issuers to express their identity using WebPKI - see [Expressing Issuer's Identity using WebPKI](./03_iss-webpki.md)
 
 The following claims extend the [OIDC ID Token data model](https://openid.net/specs/openid-connect-core-1_0.html#IDToken):
 
@@ -76,17 +78,17 @@ The following claims extend the [OIDC ID Token data model](https://openid.net/sp
   >
   > REQUIRED for: Proof of Possession, Selective Disclosure SD-Cha-Cha
 - kdk: Key Derivation Key
-  > By including a `kdk` (key derivation key) claim in a JWT, the issuer of the JWT declares that it derived the presenter's proof-of-possession key using ARKG and that the `kdk` key MUST be used to derive the corresponding private key.
+  > By including a `kdk` (key derivation key) claim in a JWT, the issuer of the JWT declares that it derived the presenter's proof-of-possession key using ARKG and that the `kdk` key MUST be used by the user to derive the corresponding private key.
   >
-  > MUST be a JWK. The JWK MUST contain the required key members for a JWK of that key type, it MUST contain the `kid` member, and MAY contain other JWK members.
+  > MUST be a JWK. The JWK MUST contain the required key members for a JWK of that key type.
+  >
+  > REQUIRED for: Proof of Possession, Selective Disclosure SD-Cha-Cha
+- sdp: Selective Disclosure Parameters
+  > `sdp` (selective disclosure parameters) claim in a JWT MUST be present if selective disclosure is used. The value of the claim is a JSON object that contains SD parameters and blinded claims.
   >
   > REQUIRED for: Selective Disclosure SD-Cha-Cha
-- sdp: Selective Disclosure Parameters
-  > `sdp` (selective disclosure parameters) claim in a JWT MUST be present if selective disclosure is used. The value of the claim is a JSON object that contains additional information required for unblinding the claims as defined in section [`sdp`](#sdp-selective-disclosure-parameters-and-ephemeral-public-key).
-  >
-  > REQUIRED for: Selective Disclosure
-- iss_jwk: Signing JWK and a WebPKI certificate
-  > By including an `iss_jwk` (issuer JWK) claim in a JWT, the issuer of the JWT declares that it used that JWK to sign the JWT and that the attached X.509 certificate attests the binding between the signing key and the domain name.
+- iss_id: Issuer identity
+  > By including an `iss_id` claim in a JWT, the issuer of the JWT presents additional identity information about itself. WebPKI profile is defined in this document.
   >
   > REQUIRED for: WebPKI issuer ID.
 
@@ -95,15 +97,17 @@ Below we summarise which claims become REQUIRED, if a given capability is used:
 | Capability           | Required claims |
 | -------------------- | --------------- |
 | Proof of Possession  | cnf, kdk        |
-| Selective Disclosure | cnf, sdp        |
+| Selective Disclosure | cnf, kdk, sdp   |
 | WebPKI issuer ID     | iss_jwk         |
 
-Use cases can decide which capabilities they need for their credentials.
+The capabilities can be used independently, hence use cases can decide which capabilities they use.
 
 You can inspect an example [IDT++ on JWT.io](https://jwt.io/?id_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjVSNXZlZ2cyMjMycDIweC1hM3c4USJ9.eyJodHRwOi8vY29uc3VsLmludGVybmFsL2ZpcnN0X25hbWUiOiIiLCJodHRwOi8vY29uc3VsLmludGVybmFsL2xhc3RfbmFtZSI6IiIsImh0dHA6Ly9jb25zdWwuaW50ZXJuYWwvZ3JvdXBzIjpbXSwibXluZXh0LmlkLmNyZWRlbnRpYWwiOnsiY25mIjp7ImNydiI6IlAtMjU2Iiwia3R5IjoiRUMiLCJ4IjoibUZic0Q4NWcwS2hRN19CYV9ESXVQcldsNGRmVllRNjdOS2w4U3hPVUxncyIsInkiOiJGNzJ0dlVPU0RvYnptdjVZT2NKYXo1eHJVLWdQQmhyaDRHN18zSERfVUE4In0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiMTIzIiwiaXNzdWVyIjoiTmV0aXMgZC5vLm8uIiwibWFzdGVyUGFzc3dvcmQiOiIiLCJudWNsZWFyQ29kZXMiOltdLCJwcm9qZWN0SWQiOiJJRFQrK0RFTU8ifSwia2giOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJoQzFpQk5WYVRhTWlJcE1KMHFpZktPZHRneHFkSFEyMG1BbEdLLXdPU0tFIiwieSI6IjJsaXFVVXR3NVV1MVlVWF9sWjRhYUNWaEVOSUFzQXY4X1MyTVJ6YkNtcWcifSwic2RwIjp7ImFsZyI6InNkLWNoYS1jaGEiLCJhcHUiOiIiLCJhcHYiOiIiLCJiYyI6eyIvY3JlZGVudGlhbFN1YmplY3QvbWFzdGVyUGFzc3dvcmQiOiJwdkk3eVpzemduVHVZUDI4N3dfRHdmNDJ0UmtlZUV4WjVjajVzeVNkIiwiL2NyZWRlbnRpYWxTdWJqZWN0L251Y2xlYXJDb2RlcyI6IkpJN2dDOTBLUllKcFh3eDVMVXZYNnlsSUtMdkpPb2p1S09yQ2phVllEVUZCIn0sImVuYyI6IlhDaGFDaGEyMCIsImVwayI6eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6IjZGa1BsbXhiWTlLczJ1RGRMZmxzOHdGLWVCV0hreFF1NF81OGx5cjNoZ2siLCJ5IjoiUXprSVZFQTRUelRUQkxEdlZYa2ZKbDVPbVpQdTM1SkpVQ3FBTDU4azNGYyJ9LCJoYXNoIjoiU0hBLTI1NiJ9fSwiZ2l2ZW5fbmFtZSI6IkFsZW4iLCJmYW1pbHlfbmFtZSI6IkhvcnZhdCIsIm5pY2tuYW1lIjoiYWxlbi5ob3J2YXQubmV0aXMiLCJuYW1lIjoiQWxlbiBIb3J2YXQiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSVBNMXNyRnpoOTlxSUh6TWhUcWJoWmZWd0hieGNxMENGeHlwbWoxN19JR1NsVndrTG49czk2LWMiLCJ1cGRhdGVkX2F0IjoiMjAyNC0xMS0yMFQxNDowODo1NS40NzJaIiwiaXNzIjoiaHR0cHM6Ly9kZXYtazcxMjNoeXQudXMuYXV0aDAuY29tLyIsImF1ZCI6Ikk5dDZPU1IzbWRFZnBycnNtT0FERFVXYTlHM2FWb1F3IiwiaWF0IjoxNzMyMTExNzM4LCJleHAiOjE3MzIxNDc3MzgsInN1YiI6Imdvb2dsZS1vYXV0aDJ8MTAyMTE3OTkyNTMxMTE1ODIxNTE5Iiwic2lkIjoiNkgtbEd3cjUyVTJJZXZtSnFFVW40OUsyNmZWcGdLY0cifQ.lXpB7AILw6nM7Daq7aOCqQlKJ2OO_dMpKD50jjQ-WaIR2KlFtZjVibfibCiGvFyPDudTsshoGakzaloejJXlGCcUtotO7Z39rOWGEyDakGFCFX8z5Zju1PwylSfMPqu4wI3yPd6cIy6BzjdD9gViNTB16Bk_0OqqQfZV187iu-1DDuSOCKdsHl5s1d9RwNrjoRzsSJd_ktJOgDolkfnE3ye_UsZlU9WUmTG6OYRxidKKNwv3HxwMnPecXkzNGtRhcXDqylXuNOa7kDtDN4gMoY9ScFuCKbp9PrMYRqSJxcDCAfWgXVuy5OVFSFjKWlZyqwgYFWmvhJE11WP96GAuNw)
 or you can obtain your IDT++ using the [IDT++ Demo App](https://test-api.mynext.id/idt/v2/).
 
 ## Specifications
+
+In the documents below you can find details about the different capabilities.
 
 - [Asynchronous Proof-of-Possession Key Generation](./01_async-pop.md)
 - [Selective Disclosure Cha-Cha](./02_sd-cha-cha.md)
@@ -117,6 +121,16 @@ or you can obtain your IDT++ using the [IDT++ Demo App](https://test-api.mynext.
 ## Reference implementation
 
 - Coming soon.
+
+## Extensions
+
+- IDT++ file server: Once the wallet is connected, an additional IDT++ OAuth-protected (e.g., private_key_jwt) file-server can be introduced where the wallet can fetch "fresh" credentials as files (in different formats and signatures).
+- Extension for PQC algorithm
+- Extension for BSS+ or other selective disclosures
+
+## Considerations
+
+The design is not limited to JWT signature profile and can be applied to other credential and signature formats, such as mdoc, W3C Verifiable Credentials, JAdES, and others.
 
 ## License
 
