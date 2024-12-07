@@ -7,28 +7,28 @@ version: 2024-11-20
 - [Introduction to SD-Cha-Cha](#introduction-to-sd-cha-cha)
 - [SD-Cha-Cha Overview](#sd-cha-cha-overview)
 - [Representation of SD-Cha-Cha Parameters in JWT](#representation-of-sd-cha-cha-parameters-in-jwt)
-  - [`sda`: Selective Disclosure Algorithm](#sda-selective-disclosure-algorithm)
   - [`sdp`: Selective Disclosure Parameters and Ephemeral Public Key](#sdp-selective-disclosure-parameters-and-ephemeral-public-key)
 - [Generate a KDF Seed](#generate-a-kdf-seed)
 - [UTF-8 Encode the Claim or Array Element](#utf-8-encode-the-claim-or-array-element)
 - [Encrypt](#encrypt)
-- [\[OUTDATED!!\] Representation of Blinded Claims and Array Elements in a JWT](#outdated-representation-of-blinded-claims-and-array-elements-in-a-jwt)
-  - [`_bc`: Blinded Claims](#_bc-blinded-claims)
-  - [`{"..." : }`: Blinded Array Elements](#---blinded-array-elements)
+- [Representation of Blinded Claims and Array Elements in a JWT](#representation-of-blinded-claims-and-array-elements-in-a-jwt)
 - [Derive a KDF Seed](#derive-a-kdf-seed)
 - [Derive Decryption Key](#derive-decryption-key)
 - [Decrypt the Encrypted Data](#decrypt-the-encrypted-data)
 - [Security considerations](#security-considerations)
+- [Privacy considerations](#privacy-considerations)
 
 ## Introduction to SD-Cha-Cha
 
 Selective disclosure is a property where a credential presenter can disclose only a subset of claims. There are many ways to implement selective disclosure [ETSI TR 119 476](https://www.etsi.org/deliver/etsi_tr/119400_119499/119476/01.01.01_60/tr_119476v010101p.pdf). When credentials are fetched in-time, just before presenting them to a Verifier, selective disclosure can be executed by only requesting claims requested by the Verifier. This is also how ID Tokens work today. When credentials cannot be tailored made for known audience, we need other mechanisms to blind and unblind claims in a credential. One common approach that does not require advanced cryptography is using salted hash tables. The approach transforms a credential into a salted hash table by replacing the values we want to blind with their respective salted hash. Salt and the value are shared outside of the (protected) payload. Since JWT is a profile for compact-serialised JWS signatures and the compact format have doesn't support for unprotected headers, a new format must be introduced, which makes the existing OIDC Authorization Servers unusable for issuing such credentials.
 
-We are introducing encryption-based selective disclosure named SD-Cha-Cha that uses encryption for blinding the claims and can be used with the existing JWTs*, ID Tokens, and other JSON formats.
+We are introducing encryption-based selective disclosure named SD-Cha-Cha that uses encryption for blinding the claims and can be used with the existing JWTs, ID Tokens, and other JSON formats.
+
+The main goal is to hide the claim values, not the structure nor the claim names.
 
 ## SD-Cha-Cha Overview
 
-SD-Cha-Cha is designed to blind claims and array elements while minimizing changes to the overall data structure. Blinding the data structure itself is out of scope for SD-Cha-Cha. The following example illustrates the application of SD-Cha-Cha to claims and array elements.
+SD-Cha-Cha is designed to blind claims and array elements while without affecting the data structure. Blinding the data structure or claim names are out of scope for SD-Cha-Cha. The following example illustrates the application of SD-Cha-Cha to claims and array elements.
 
 JSON object with claims:
 
@@ -55,13 +55,11 @@ JSON object with claims:
 
 Below you can find the same JSON object with hidden claims. For demonstration purposes we are showing functions `HIDE-CLAIM()`, however, the values should be replaced with function's output.
 
-```json
+```jsonc
 {
   "user": {
-    "_sd": [
-      "HIDE-CLAIM(['email', 'alice@example.com'])"
-    ],
     "name": "Alice",
+    "email": "",  // This claim is hidden
     "preferences": {
       "theme": "dark",
       "notifications": "enabled"
@@ -70,17 +68,22 @@ Below you can find the same JSON object with hidden claims. For demonstration pu
   "session": {
     "id": "session-123",
     "tokens": {
-      "_sd": [
-        "HIDE-CLAIM(['refresh', 'hidden-token'])"
-      ],
-      "access": "visible-token"
+      "access": "visible-token",
+      "refresh": ""  // This claim is hidden
     }
   },
-  "data": ["Visible Item", "HIDE-CLAIM('Hidden Item')", "Visible Again"]
+  "data": ["Visible Item", "", "Visible Again"], // second element is hidden
+  "sdp": {
+    "bc": { // a map of blinded claims
+        "/user/email": "KgiBn9W6vOn48ijAvQ6ZtP3t0BZiZaqmTSCpIu39",
+        "/session/tokens/refresh/": "VhRHqbMg4wWsayUD54uG6kvcBHtauWRmu5h2VffAmlRX",
+        "/data/1": "Auu564wgfcGfqBkVms2R4hRa5XtvWhUbyVRWDumHaHMl"
+    }
+  }
 }
 ```
 
-SD-Cha-Cha consist of the following cryptographic artefacts
+SD-Cha-Cha consists of the following cryptographic artefacts
 
 | Cryptographic Artefacts   |      Short       |      Wallet      |  Issuer   |     Verifier     |
 | ------------------------- | :--------------: | :--------------: | :-------: | :--------------: |
@@ -165,21 +168,6 @@ encryption_key/decryption_key <- HASH(seed || nonce)
 
 where `nonce` is the encryption initialization vector and || denotes concatenation of two values. The hash function and the size of the nonce are defined by the SD-Cha-Cha instantiation. See section [Selective Disclosure Parameters](#sdp-selective-disclosure-parameters-and-ephemeral-public-key).
 
-### `sda`: Selective Disclosure Algorithm
-
-Presence of the `sda` claim in a JWT payload signals that selective disclosure algorithm is used. For SD-Cha-Cha the `sda` value MUST be `sd-cha-cha`. The value is case sensitive.
-
-Example:
-
-```json
-{
-  "sda": "sd-cha-cha"
-}
-```
-
-If the Selective Disclosure algorithm is not recognized, the credential SHOULD not be processed.
-
-If `sda` has the value `sd-cha-cha` claim `sdp` (Selective Disclosure Parameters) MUST be present.
 
 ### `sdp`: Selective Disclosure Parameters and Ephemeral Public Key
 
@@ -187,15 +175,17 @@ If `sda` has the value `sd-cha-cha` claim `sdp` (Selective Disclosure Parameters
 
 `sdp` contains the following members:
 
+- **`alg`: Selective Disclosure Algorithm**: REQUIRED. String. Defines the selective disclosure algorithm being used. For SD-Cha-Cha the `alg` value MUST be `sd-cha-cha`. The value is case sensitive. Other specifications MUST define algorithm names for the respective selective disclosure.
+If the Selective Disclosure algorithm is not recognized, the credential SHOULD not be processed.
 - **`enc`: Encryption Algorithm**: REQUIRED. String. Defines algorithm used for encryption and **MUST** have one of the following values:
   - `XChaCha20` (RECOMMENDED)
   - `ChaCha20`
 - **`hash`: Hash Algorithm**: REQUIRED. String. The hash algorithm MUST be a secure hash algorithm recognized in cryptographic standards. The default algorithm is `SHA-256`. The name of the hash algorithm MUST match one of the entries in the [Named Information Hash Algorithm Registry](https://www.iana.org/assignments/named-information/named-information.xhtml).
-- **`apu`**: REQUIRED. Base64url encoded string. MUST be the value of the `kid` of the ephemeral key:`payload.sdp.epk.kid`.
-  - Potential optimization: MUST be set to `header.jwk.kid`. This option SHOULD be used only if the following two conditions are met:
+- **`apu`**: REQUIRED. Base64url encoded string. MUST match the value of the `kid` of the ephemeral key:`/payload/sdp/epk/kid`.
+  - Potential optimization: MUST be set to `/protected/jwk/kid`. This option SHOULD be used only if the following two conditions are met:
     - issuer's signing key type matches the user's cnf key type
     - issuer's public key is in the header `jwk` parameter
-- **`apv`**: REQUIRED. Base64url encoded string. MUST be set to the `kid` of the confirmation method `payload.cnf.jwk.kid`
+- **`apv`**: REQUIRED. Base64url encoded string. MUST match the value of to the `kid` of the confirmation method `/payload/cnf/jwk/kid`
 - **`epk`**: REQUIRED. JWK. Ephemeral public key as JWK. It MUST have all the required members for the give key type and MUST contain the `kid` member. Supported `crv` values:
   - `P-256` (RECOMMENDED)
   - `P-384`
@@ -205,11 +195,21 @@ Non-normative example of a Selective Disclosure Parameter claim:
 
 ```json
 {
+  "cnf" {
+    "jwk": {
+      "kid": "321",
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "rmIeJYdwjy8nzAOcNQnfCcNRdYp6FauGig2IwjRLdbM",
+      "y": "o1XwXpdEe_986o6fcvTwQ2dsoUzng-g3Ks7pxFpXq5k"
+    }
+  },
   "sdp": {
+    "alg": "sd-cha-cha",
     "enc": "XChaCha20",
     "hash": "SHA-256",
-    "apu": "{sdp.epk.kid}",
-    "apv": "{cnf.jwk.kid}",
+    "apu": "123",
+    "apv": "321",
     "epk": {
       "kid": "123",
       "kty": "EC",
@@ -260,14 +260,11 @@ GENERATE-SEED(pk) -> (kdfSeed, epk)
       RETURN (kdfSeed, epk)
 ```
 
-The ephemeral public key (epk) MUST be shared with the user as `sdp.epk` claim. The `kid` value MUST be set to the JWK thumbprint of the `epk`.
+The ephemeral public key (epk) MUST be shared with the user as `/sdp/epk` claim. The `kid` value MUST be set to the JWK thumbprint of the `epk`.
 
 ## UTF-8 Encode the Claim or Array Element
 
-Before we encrypt the data (JSON claim or a JSON array element), we MUST encode them to UTF-8 string as follows:
-
-- Claims are structured as an array with two elements: [claim_name, claim_value] and UTF-8 encoded: `data = UTF8([claim_name, claim_value])`
-- Array elements are encoded as they appear in the array: `data = UTF8(array_element)`
+Before we encrypt the data (JSON claim or a JSON array element), we MUST encode them to UTF-8 string as follows: `UTF8(claim_value)`
 
 UTF8(STRING) denotes the octets of the UTF-8 [RFC3629] representation of STRING.
 
@@ -313,83 +310,23 @@ ENCRYPT(kdfSeed, dataToEncrypt) -> (encryptedData)
       RETURN encryptedData
 ```
 
-## [OUTDATED!!] Representation of Blinded Claims and Array Elements in a JWT
+After the claim is encrypted, it's original value is set to null:
 
-Blinded claims or array elements are always encoded as strings. In the subsections, we are defining how to represent them in a JWT.
+- object: {}
+- array: []
+- number: null
+- string: ""
+- boolean: null
 
-### `_bc`: Blinded Claims
+## Representation of Blinded Claims and Array Elements in a JWT
 
-The `_bc` claim MUST be used to store blinded (encrypted) claims in a JWT. It MUST ensure that sensitive information is hidden while preserving the JSON structure. The following steps MUST be followed to process and represent blinded claims in a JWT:
-
-1. **Check for Existing `_bc` Claim**  
-   A `_bc` claim of type array of strings MUST exist at the same hierarchical level as the original claim. If it does not exist, proceed to step 2, else proceed to step 3.
-
-2. **Create `_bc` if Missing**  
-   If a `_bc` claim does not exist, it MUST be created as an empty array `[]` at the same hierarchical level as the original claim.
-
-3. **Append the Blinded Claim**  
-   The output of the ENCRYPT function (representing the encrypted original claim) MUST be appended to the `_bc` array.
-
-4. **Remove the Original Claim**  
-   The original (unblinded) claim MUST be removed from the JSON object to complete the transformation.
-
-Example:
-
-```json
-{
-  "hide": "me",
-  "foo": "bar",
-  "deep": {
-    "deep": "forest",
-    "hide": "me too"
-  }
-}
-```
-
-Transformed:
-
-```json
-{
-  "_bc": ["ENCRYPTED_HIDE_ME"],
-  "foo": "bar",
-  "deep": {
-    "deep": "forest",
-    "_bc": ["ENCRYPTED_HIDE_ME_TOO"]
-  }
-}
-```
-
-### `{"..." : }`: Blinded Array Elements
-
-When blinding an array element in a JSON object, the following steps MUST be performed:
-
-1. **Replace the Array Element**  
-  The array element MUST be replaced with the JSON object `{"..." : {encrypted_data}}`, where `{encrypted_data}` represents the encrypted value of the original element.
-
-Example:
-
-```json
-{
-  "foo": ["hide-me", "bar"]
-}
-```
-
-Transformed:
-
-```json
-{
-  "foo": [{"...": "ENCRYPTED_HIDE_ME"}, "bar"]
-}
-```
-
-> [!NOTE]
-> This design may affect the array type as it requires to replace an element with a JSON object. An alternative using JSON pointers may be considered instead.
+Blinded claims are represented as a map, where the key is JSON pointer to the claim in the credential and value is the encrypted value.
 
 ## Derive a KDF Seed
 
 KDF seed is a shared secret that can be computed by both the issuer and the holder using the ECDH algorithm. The pseudocode below defines the function for the seed derivation by the wallet.
 
-The ephemeral public key (epk) MUST be taken from the `sdp.epk` claim. The derived secret key `dsk` is the secret key corresponding to the public key in the `cnf.jwk` claim.
+The ephemeral public key (epk) MUST be taken from the `/sdp/epk` claim. The derived secret key `dsk` is the secret key corresponding to the public key in the `/cnf/jwk` claim.
 
 ```pseudocode
 DERIVE-SEED(dsk, epk) -> (kdf_seed)
@@ -496,5 +433,7 @@ DECRYPT(decryptionKey, dataToDecrypt) -> (data)
 ## Security considerations
 
 Nonce MUST be a unique and random value. Nonce size requirements are defined by the respective instantiations.
+
+## Privacy considerations
 
 SD-Cha-Cha does not aim to hide the structure of the JWT Payload.

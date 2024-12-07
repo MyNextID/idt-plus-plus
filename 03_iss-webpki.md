@@ -43,7 +43,9 @@ A subdomain MUST be created to allow certificate issuing services to verify cont
 - If a third party (provider) manages issuer's domain name and signing keys, the subdomain MUST follow the format `jwt.iss-mt.{issuer's domain name}.{provider's domain name}`.  
   **Example**: `jwt.iss-mt.myproject.eu.example.com`
 
-If issuer's service is managed, the issuer SHOULD publish a TXT record under their domain `authorize: jwt.iss-mt.{issuer's domain name}.{provider's domain name} authorization_date: {RFC 3339 UTC date and time}`. The entry is case insensitive and MUST NOT contain the `https` schema.
+If issuer's service is managed, the issuer SHOULD publish a TXT record under their domain `authorize: jwt.iss-mt.{issuer's domain name}.{provider's domain name} authorization_date: {RFC 3339 UTC date and time}`. The entry is case insensitive and MUST NOT contain the `https` schema. Authorization date value MUST be the date and time of the authorization.
+
+As the authorization is not verifiable, we should consider the following improvement proposal:
 
 - Improvement proposal: signing key delegation using WebPKI
   - Signing key: provider-generated sk + issuer's signature of SHA(public key)+SHA(issuer-controlled pk)

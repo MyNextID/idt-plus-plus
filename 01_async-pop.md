@@ -51,7 +51,7 @@ ARKG offers several key advantages:
 - Issuers can issue credentials without directly contacting the wallet.
 - VCs can be deposited into the wallet using various communication methods, such as email or messaging services.
 - ARKG allows the introduction of a credential servers (REST endpoints), decoupled from the Authorization Server, that can serve the wallet credentials in different formats.
-- It enables us to introduce JWT-friendly selective disclosure, [SD-Cha-Cha](#sd-cha-cha-overview), which allows users to share specific claims while keeping others private.
+- It enables us to introduce JWT-friendly selective disclosure, [SD-Cha-Cha](./02_sd-cha-cha.md), which allows users to share specific claims while keeping others private.
 
 ## ARKG Overview
 
@@ -222,7 +222,7 @@ IDT++ extends the [Representation of an Asymmetric Proof-of-Possession Key](http
 
 The JWK member MUST contain the required key members for a JWK of that key type and it MUST contain the `kid` JWK member as defined below. It MAY contain other JWK members. `kid` MUST be computed as
   >
-  > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(Derived Public Key JWK))`
+  > `jwk_thumbprint(cnf JWK)`
 
 ### `kdk`: Key Derivation Key
 
@@ -231,9 +231,9 @@ The `kdk` JWT claim specifies that the included key MUST be used by the end-user
 - kid: REQUIRED.
   > MUST be computed as
   >
-  > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(Ephemeral Public Key JWK))`
+  > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(cnf JWK) || jwk_thumbprint(kdk JWK))`
 - alg: REQUIRED. MUST be `ARKG-P256ADD-ECDH`.
-- kty: REQUIRED. MUST be `ARKG-KDK`
+- key_use: REQUIRED. MUST be `[arkg_deriveKey]`.
 
 ### Example
 
@@ -242,17 +242,18 @@ The following is a non-normative example of the `cnf` and `kdk` claims:
 ```json
 {
   "cnf": {
-    "kty": "ESP256-ARKG",
-    "alg": "ESP256",
     "kid": "123abc",
+    "key_use": ["verify"],
+    "kty": "EC",
     "crv":"P-256",
     "x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", 
     "y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"
   },
   "kdk": {
-    "kty": "ARKG-KDK",
     "kid": "abc123",
+    "key_use": ["arkg_deriveKey"],
     "alg": "ARKG-P256ADD-ECDH",
+    "kty": "EC",
     "crv":"P-256",
     "x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", 
     "y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"

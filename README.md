@@ -1,9 +1,10 @@
+---
+status: draft
+version: 2024-12-07
+previous version: N/A
+proposed: 2024-09-01
+---
 # IDT++ - an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI
-
-- Status: draft
-- Version: 2024-12-05
-- Previous version: N/A
-- Proposed: 2024-09-01
 
 ## Introduction
 
@@ -87,7 +88,7 @@ The following claims extend the [OIDC ID Token data model](https://openid.net/sp
   > `sdp` (selective disclosure parameters) claim in a JWT MUST be present if selective disclosure is used. The value of the claim is a JSON object that contains SD parameters and blinded claims.
   >
   > REQUIRED for: Selective Disclosure SD-Cha-Cha
-- iss_id: Issuer identity
+- iss_jwk: Issuer identity
   > By including an `iss_id` claim in a JWT, the issuer of the JWT presents additional identity information about itself. WebPKI profile is defined in this document.
   >
   > REQUIRED for: WebPKI issuer ID.
@@ -146,8 +147,4 @@ This work is being supported by the world greatest team at Netis. Existing work 
 - [SD-JWT (IETF Draft)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-14.html)
 - [OID4VCI (OpenID Draft)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
 
-The authors would like to thank all of these authors for their research and development work that led to the creation of this document.
-
-## Funding
-
-This work is funded in part by the SPRIND - FUNKE: Deepfake Detection and Prevention Challenge. To learn more about this work, [read more here](https://www.sprind.org/en/impulses/challenges/funke-deepfake).
+The authors would like to thank all of these authors for their research and work that led to the creation of this specification.
