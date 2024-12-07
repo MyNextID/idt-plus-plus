@@ -7,12 +7,11 @@
 - [Appendix C. Document History](#appendix-c-document-history)
 - [Appendix D. Terminology](#appendix-d-terminology)
   - [Actors](#actors)
-- [Author's Addresses](#authors-addresses)
+
+> [!NOTE]
+> This document has not been edited nor finalized.
 
 ## Appendix A. References
-
-> [!WARNING]TODO
-> Collect and organise the references.
 
 ### Normative references
 
@@ -109,8 +108,3 @@ Component view:
 - OIDC Authorization Server
 - Wallet
 - Relying Party
-
-## Author's Addresses
-
-Alen Horvat  
-Email: [alen.horvat@netis.si](mailto:alen.horvat@netis.si)

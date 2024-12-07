@@ -111,7 +111,8 @@ In the documents below you can find details about the different capabilities.
 
 - [Asynchronous Proof-of-Possession Key Generation](./01_async-pop.md)
 - [Selective Disclosure Cha-Cha](./02_sd-cha-cha.md)
-- [Issuer identity with WebPKI](./03_sd-cha-cha.md)
+- [Issuer identity with WebPKI](./03_iss-webpki.md)
+- [Extension: IDT++ Server](./04_vc-server.md)
 - [Appendix](./99_appendix.md)
 
 ## Demo
@@ -124,7 +125,6 @@ In the documents below you can find details about the different capabilities.
 
 ## Extensions
 
-- IDT++ file server: Once the wallet is connected, an additional IDT++ OAuth-protected (e.g., private_key_jwt) file-server can be introduced where the wallet can fetch "fresh" credentials as files (in different formats and signatures).
 - Extension for PQC algorithm
 - Extension for BSS+ or other selective disclosures
 
@@ -138,4 +138,16 @@ See the [LICENSE](./LICENSE)
 
 ## Acknowledgements
 
-This work is being supported by the world greatest team at Netis.
+This work is being supported by the world greatest team at Netis. Existing work that inspired this specification
+
+- [Blockchain Privacy-Enhancing Technology Series — Stealth Address (I)](https://hackernoon.com/blockchain-privacy-enhancing-technology-series-stealth-address-i-c8a3eb4e4e43)
+- [ARKG (IETF Draft)](https://www.ietf.org/archive/id/draft-bradleylundberg-cfrg-arkg-02.html)
+- [PIKA (IETF Draft)](https://www.ietf.org/archive/id/draft-barnes-oauth-pika-01.html)
+- [SD-JWT (IETF Draft)](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-14.html)
+- [OID4VCI (OpenID Draft)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+
+The authors would like to thank all of these authors for their research and development work that led to the creation of this document.
+
+## Funding
+
+This work is funded in part by the SPRIND - FUNKE: Deepfake Detection and Prevention Challenge. To learn more about this work, [read more here](https://www.sprind.org/en/impulses/challenges/funke-deepfake).

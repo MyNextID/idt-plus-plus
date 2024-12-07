@@ -11,15 +11,14 @@ version: 2024-11-20
   - [`jwk` Header Parameter: Issuer's Signing Key and Certificate in the Protected Header](#jwk-header-parameter-issuers-signing-key-and-certificate-in-the-protected-header)
   - [`iss_jwk`: Issuer's Signing Key and Certificate](#iss_jwk-issuers-signing-key-and-certificate)
 - [Verify the Issuer Identifier](#verify-the-issuer-identifier)
+- [The role of Certificate Transparency](#the-role-of-certificate-transparency)
+- [Related work](#related-work)
 
-In OpenID Connect (OIDC) and OAuth, the value of the `iss` (issuer) JWT claim is used to retrieve an Authorization Server's signing keys to verify the signature of an ID Token. The approach works well for short-lived credentials that are fetched by a Relying Party directly from the issuer (Authorization Server). However, when credentials are presented using a digital wallet this approach faces limitations as issuers may rotate their keys, or verifiers may have limited internet connectivity to verify the link between the issuer identifier (URL) and the signing public key.
+In OpenID Connect (OIDC) and OAuth, the value of the `iss` (issuer) JWT claim is used to identify the Authorization Server and to obtain information about the server's signing keys to verify the signature of an ID Token. Since there's a direct interaction between the OP and RP, the approach works well for short-lived credentials and is not subject to privacy risks. However, when credentials are presented to an RP using a digital wallet this approach may face limitations as issuers may rotate their keys, the keys may be unavailable due to limited internet connectivity.
 
-We propose a model that binds a signing public key to a domain name using WebPKI, as WebPKI is one of the globally recognised identity frameworks. WebPKI enables the binding of a public key to a domain name as obtaining a WebPKI certificate requires proving ownership of both the domain name and the private key.
+We propose a model that binds a signing public key to a domain name using WebPKI.  WebPKI is one of the globally recognised identity frameworks. WebPKI enables the binding of a public key to a domain name as obtaining a WebPKI certificate requires proving ownership of both the domain name and the private key.
 
 Services like [CertBot](https://certbot.eff.org/) make it easy to obtain WebPKI certificates. Additionally, the [Certificate Transparency](https://certificate.transparency.dev/) initiative ensures that certificates can be easily verified for existence, conformity, and validity.
-
-> [!IMPORTANT]
-> WebPKI certificates are profiled for website authentication. To use the infrastructure for digital signatures, a dedicated certificate profile SHOULD be developed, incorporating additional fields and constraints to ensure security and interoperability.
 
 ## Generation of Signing Keys
 
@@ -44,14 +43,10 @@ A subdomain MUST be created to allow certificate issuing services to verify cont
 - If a third party (provider) manages issuer's domain name and signing keys, the subdomain MUST follow the format `jwt.iss-mt.{issuer's domain name}.{provider's domain name}`.  
   **Example**: `jwt.iss-mt.myproject.eu.example.com`
 
-If issuer's signing keys are managed by a third party, the issuer should:
+If issuer's service is managed, the issuer SHOULD publish a TXT record under their domain `authorize: jwt.iss-mt.{issuer's domain name}.{provider's domain name} authorization_date: {RFC 3339 UTC date and time}`. The entry is case insensitive and MUST NOT contain the `https` schema.
 
-- Option A: Assume that we can fully trust the provider
-- Option B: Create a TXT record pointing to the provider - note: this requires another lookup
-  - Improvement: delegate the signing key generation
-    - Signing key: provider-generated sk + issuer's signature of SHA(public key)+SHA(issuer-controlled pk)
-
-In a multi-tenant system the trust lies with the provider. The issuer MUST set their {issuer's domain name}/.well-known/jwt-iss and set their iss identifier to 
+- Improvement proposal: signing key delegation using WebPKI
+  - Signing key: provider-generated sk + issuer's signature of SHA(public key)+SHA(issuer-controlled pk)
 
 ## Requesting a TLS Certificate
 
@@ -120,11 +115,21 @@ Example:
 
 ## Verify the Issuer Identifier
 
-To verify the link between the `iss` value and the signing public key, you MUST perform the following steps
+To verify the link between the `iss` value and the signing public key, the verifier MUST perform the following steps
 
 - Obtain the public key from the signing key certificate from the x5c JWK parameter.
-- Validate the X.509 certificate chain. Root Certificate Authority MUST be one of the recognised WebPKI CAs.
-- Verify that the domain name in the `iss` value (without the `https://` schema) matches the `{issuer's domain name}` value in the Common Name (CN) and the Subject Alternative Name (SAN) according to the schema:
+- Validate the X.509 certificate chain. The root Certificate Authority MUST be one of the recognised WebPKI Certificate Authorities.
+- Verify that the domain name in the `iss` value (without the `https://` schema) matches the `{issuer's domain name}` value in the Common Name (CN) and the Subject Alternative Name (SAN DNS) according to the schema:
   - `jwt.iss.{issuer's domain name}` for self-managed services
   - `jwt.iss-mt.{issuer's domain name}.{provider's domain name}` for managed services
 - Verify that the certificate has not been revoked at the time of signature creation.
+
+Issuer SHOULD add an authorization TXT record: `authorize: jwt.iss-mt.{issuer's domain name}.{provider's domain name}`. Note that with this we can only verify that the service provider is authorized at the verification time, but we don't have a guarantee that the authorization has been valid at the signature creation time.
+
+## The role of Certificate Transparency
+
+If IDT++ are long lived and we want to check whether the signing certificate was valid at the point of signing, we can rely on the [Certificate Transparency](https://certificate.transparency.dev/) and [crt.sh](https://crt.sh).
+
+## Related work
+
+- [Proof of Issuer Key Authority (PIKA)](https://www.ietf.org/archive/id/draft-barnes-oauth-pika-01.html)
