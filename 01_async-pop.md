@@ -233,7 +233,7 @@ The `kdk` JWT claim specifies that the included key MUST be used by the end-user
   >
   > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(cnf JWK) || jwk_thumbprint(kdk JWK))`
 - alg: REQUIRED. MUST be `ARKG-P256ADD-ECDH`.
-- key_use: REQUIRED. MUST be `[arkg_deriveKey]`.
+- key_ops: REQUIRED. MUST be `[arkg_deriveKey]`.
 
 ### Example
 
@@ -243,7 +243,7 @@ The following is a non-normative example of the `cnf` and `kdk` claims:
 {
   "cnf": {
     "kid": "123abc",
-    "key_use": ["verify"],
+    "key_ops": ["verify"],
     "kty": "EC",
     "crv":"P-256",
     "x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", 
@@ -251,7 +251,7 @@ The following is a non-normative example of the `cnf` and `kdk` claims:
   },
   "kdk": {
     "kid": "abc123",
-    "key_use": ["arkg_deriveKey"],
+    "key_ops": ["arkg_deriveKey"],
     "alg": "ARKG-P256ADD-ECDH",
     "kty": "EC",
     "crv":"P-256",
