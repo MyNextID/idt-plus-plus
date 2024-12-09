@@ -126,7 +126,7 @@ In the documents below you can find details about the different capabilities.
 - [Asynchronous Proof-of-Possession Key Generation](./01_async-pop.md)
 - [Selective Disclosure Cha-Cha](./02_sd-cha-cha.md)
 - [Issuer identity with WebPKI](./03_iss-webpki.md)
-- [Extension: IDT++ Server](./04_vc-server.md)
+- [Extension: IDT++ Server](./04_idtpp-server.md)
 - [Appendix](./99_appendix.md)
 
 ## Demo
