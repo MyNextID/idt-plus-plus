@@ -36,7 +36,8 @@
 
 ## Appendix D. Terminology
 
-> [!NOTE] Work In progress
+> [!NOTE]
+> Work In progress
 
 This specification uses terms Relying Party (RP), OpenID Provider (OP), Authorization Server (AS), JSON Web Token (JWT), ID Token (IDT), JSON Web Signature (JWS), as defined in [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html).
 

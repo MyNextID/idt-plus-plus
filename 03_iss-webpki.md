@@ -6,7 +6,8 @@ version: 2024-11-20
 
 Table of Contents
 
-> [!NOTE] This capability is not yet showcased in the demo.
+> [!NOTE]
+> This capability is not yet showcased in the demo.
 
 - [Generation of Signing Keys](#generation-of-signing-keys)
 - [Creation of Subdomain](#creation-of-subdomain)
