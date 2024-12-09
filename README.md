@@ -89,7 +89,7 @@ The following claims extend the [OIDC ID Token data model](https://openid.net/sp
   >
   > REQUIRED for: Selective Disclosure SD-Cha-Cha
 - iss_jwk: Issuer identity
-  > By including an `iss_id` claim in a JWT, the issuer of the JWT presents additional identity information about itself. WebPKI profile is defined in this document.
+  > By including an `iss_jwk` claim in a JWT, the issuer of the JWT presents additional identity information about itself. WebPKI profile is defined in this document.
   >
   > REQUIRED for: WebPKI issuer ID.
 
