@@ -4,6 +4,8 @@ version: 2024-11-20
 
 # IDT++ - Asynchronous Proof-of-Possession Key Generation <!-- omit from toc -->
 
+Table of Contents
+
 - [Introduction](#introduction)
 - [ARKG Overview](#arkg-overview)
 - [ARKG Profile for Elliptic Curves](#arkg-profile-for-elliptic-curves)
@@ -14,7 +16,7 @@ version: 2024-11-20
   - [Derive Public Key](#derive-public-key)
 - [Representation of an ARKG-Derived Asymmetric Proof-of-Possession Key in JWT](#representation-of-an-arkg-derived-asymmetric-proof-of-possession-key-in-jwt)
   - [`cnf`: Confirmation Claim](#cnf-confirmation-claim)
-  - [`kdk`: Key Derivation Key](#kdk-key-derivation-key)
+  - [`kh`: Key Derivation Key](#kh-key-derivation-key)
   - [Example](#example)
 - [Derivation of the Proof-of-Possession Private Key](#derivation-of-the-proof-of-possession-private-key)
 
@@ -224,20 +226,20 @@ The JWK member MUST contain the required key members for a JWK of that key type 
   >
   > `jwk_thumbprint(cnf JWK)`
 
-### `kdk`: Key Derivation Key
+### `kh`: Key Derivation Key
 
-The `kdk` JWT claim specifies that the included key MUST be used by the end-user to derive the proof-of-possession key, represented by the `cnf` claim, using the ARKG algorithm. The value of the `kdk` claim is a public key formatted as a JWK (JSON Web Key). The `kdk` MUST contain the required key members for a JWK of that key type and members defined below:
+The `kh` JWT claim specifies that the included key MUST be used by the end-user to derive the proof-of-possession key, represented by the `cnf` claim, using the ARKG algorithm. The value of the `kh` claim is a public key formatted as a JWK (JSON Web Key). The `kh` MUST contain the required key members for a JWK of that key type and members defined below:
 
 - kid: REQUIRED.
   > MUST be computed as
   >
-  > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(cnf JWK) || jwk_thumbprint(kdk JWK))`
+  > `SHA256(jwk_thumbprint(Master Public Key JWK) || jwk_thumbprint(cnf JWK) || jwk_thumbprint(kh JWK))`
 - alg: REQUIRED. MUST be `ARKG-P256ADD-ECDH`.
 - key_ops: REQUIRED. MUST be `[arkg_deriveKey]`.
 
 ### Example
 
-The following is a non-normative example of the `cnf` and `kdk` claims:
+The following is a non-normative example of the `cnf` and `kh` claims:
 
 ```json
 {
@@ -249,7 +251,7 @@ The following is a non-normative example of the `cnf` and `kdk` claims:
     "x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", 
     "y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"
   },
-  "kdk": {
+  "kh": {
     "kid": "abc123",
     "key_ops": ["arkg_deriveKey"],
     "alg": "ARKG-P256ADD-ECDH",

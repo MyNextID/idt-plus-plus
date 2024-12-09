@@ -4,6 +4,10 @@ version: 2024-11-20
 
 # Expressing Issuer's Identity using WebPKI <!-- omit in toc -->
 
+Table of Contents
+
+> [!NOTE] This capability is not yet showcased in the demo.
+
 - [Generation of Signing Keys](#generation-of-signing-keys)
 - [Creation of Subdomain](#creation-of-subdomain)
 - [Requesting a TLS Certificate](#requesting-a-tls-certificate)

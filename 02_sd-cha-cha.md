@@ -4,6 +4,8 @@ version: 2024-11-20
 
 # Selective Disclosure goes Dancing - SD-Cha-Cha <!-- omit in toc -->
 
+Table of Contents
+
 - [Introduction to SD-Cha-Cha](#introduction-to-sd-cha-cha)
 - [SD-Cha-Cha Overview](#sd-cha-cha-overview)
 - [Representation of SD-Cha-Cha Parameters in JWT](#representation-of-sd-cha-cha-parameters-in-jwt)

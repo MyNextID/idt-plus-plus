@@ -1,5 +1,8 @@
 # Appendix <!-- omit in toc -->
 
+> [!NOTE]
+> This document has not been edited nor finalized.
+
 - [Appendix A. References](#appendix-a-references)
   - [Normative references](#normative-references)
   - [Informative references](#informative-references)
@@ -7,9 +10,6 @@
 - [Appendix C. Document History](#appendix-c-document-history)
 - [Appendix D. Terminology](#appendix-d-terminology)
   - [Actors](#actors)
-
-> [!NOTE]
-> This document has not been edited nor finalized.
 
 ## Appendix A. References
 
@@ -30,6 +30,7 @@
 
 ## Appendix C. Document History
 
+- 2024-12-09: Editorial fixes
 - 2024-11-20: Major refactoring (v1 - core capabilities, v2 - extensions)
 - 2024-09-08: Initial version
 

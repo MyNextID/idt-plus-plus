@@ -4,7 +4,20 @@ version: 2024-12-07
 previous version: N/A
 proposed: 2024-09-01
 ---
-# IDT++ - an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI
+# IDT++ - an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI <!-- omit in toc -->
+
+Table of Contents
+
+- [Introduction](#introduction)
+- [Overview](#overview)
+- [ID Token++](#id-token)
+- [Specifications](#specifications)
+- [Demo](#demo)
+- [Reference implementation](#reference-implementation)
+- [Extensions](#extensions)
+- [Considerations](#considerations)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
 
 ## Introduction
 
@@ -78,8 +91,8 @@ The following claims extend the [OIDC ID Token data model](https://openid.net/sp
   > MUST be the [JWK Confirmation Method](https://www.rfc-editor.org/rfc/rfc7800.html#section-3.2). The JWK MUST contain the required key members for a JWK of that key type, it MUST contain the `kid` member, and MAY contain other JWK members. The JWK MUST be the ARKG-derived public key.  
   >
   > REQUIRED for: Proof of Possession, Selective Disclosure SD-Cha-Cha
-- kdk: Key Derivation Key
-  > By including a `kdk` (key derivation key) claim in a JWT, the issuer of the JWT declares that it derived the presenter's proof-of-possession key using ARKG and that the `kdk` key MUST be used by the user to derive the corresponding private key.
+- kh: Key Derivation Key
+  > By including a `kh` (key derivation key) claim in a JWT, the issuer of the JWT declares that it derived the presenter's proof-of-possession key using ARKG and that the `kh` key MUST be used by the user to derive the corresponding private key.
   >
   > MUST be a JWK. The JWK MUST contain the required key members for a JWK of that key type.
   >
@@ -97,8 +110,8 @@ Below we summarise which claims become REQUIRED, if a given capability is used:
 
 | Capability           | Required claims |
 | -------------------- | --------------- |
-| Proof of Possession  | cnf, kdk        |
-| Selective Disclosure | cnf, kdk, sdp   |
+| Proof of Possession  | cnf, kh        |
+| Selective Disclosure | cnf, kh, sdp   |
 | WebPKI issuer ID     | iss_jwk         |
 
 The capabilities can be used independently, hence use cases can decide which capabilities they use.
