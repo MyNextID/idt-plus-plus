@@ -170,7 +170,6 @@ encryption_key/decryption_key <- HASH(seed || nonce)
 
 where `nonce` is the encryption initialization vector and || denotes concatenation of two values. The hash function and the size of the nonce are defined by the SD-Cha-Cha instantiation. See section [Selective Disclosure Parameters](#sdp-selective-disclosure-parameters-and-ephemeral-public-key).
 
-
 ### `sdp`: Selective Disclosure Parameters and Ephemeral Public Key
 
 `sdp` JWT claim is a JSON object that contains information about the selective disclosure algorithm. Parameters for SD-Cha-Cha selective disclosure family are defined in this section.
@@ -197,7 +196,7 @@ Non-normative example of a Selective Disclosure Parameter claim:
 
 ```json
 {
-  "cnf" {
+  "cnf" :{
     "jwk": {
       "kid": "321",
       "kty": "EC",
@@ -312,13 +311,14 @@ ENCRYPT(kdfSeed, dataToEncrypt) -> (encryptedData)
       RETURN encryptedData
 ```
 
-After the claim is encrypted, it's original value is set to null:
+After the claim is encrypted, it's original value is set to the following default value:
 
+- number (int): 0
+- number (float): 0.0
+- string: ""
+- bool: false
 - object: {}
 - array: []
-- number: null
-- string: ""
-- boolean: null
 
 ## Representation of Blinded Claims and Array Elements in a JWT
 
