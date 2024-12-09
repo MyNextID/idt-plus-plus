@@ -4,7 +4,7 @@ version: 2024-12-07
 previous version: N/A
 proposed: 2024-09-01
 ---
-# IDT++ - an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI <!-- omit in toc -->
+# IDT++ an ID Token profile with support for cryptographic binding, selective disclosure, and Web PKI <!-- omit in toc -->
 
 Table of Contents
 
