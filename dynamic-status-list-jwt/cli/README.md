@@ -28,7 +28,7 @@ To get started, install the CLI tool and test its capabilities. For an in-depth 
 
 ### Prerequisites
 
-Ensure you have `Go` installed (version 1.18 or later). If not, install it [here](https://go.dev/doc/install).
+Ensure you have `Go` installed (version 1.23 or later). If not, install it [here](https://go.dev/doc/install).
 
 ### Installation Steps
 
