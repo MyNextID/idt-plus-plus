@@ -114,6 +114,44 @@ func (cm *CRLManager) GenerateCRL(rand io.Reader, issuerCert *x509.Certificate, 
 	return pem.EncodeToMemory(pemBlock), nil
 }
 
+// GenerateCRL generates a PEM-encoded CRL using CreateRevocationList
+func (cm *CRLManager) GenerateCRLBitStrinExtension(rand io.Reader, issuerCert *x509.Certificate, issuerKey crypto.Signer, bitString []byte) ([]byte, error) {
+	cm.mutex.Lock()
+	defer cm.mutex.Unlock()
+
+	var revokedCertificates []pkix.RevokedCertificate
+
+	template := x509.RevocationList{
+		Number:              big.NewInt(time.Now().Unix()),
+		ThisUpdate:          time.Now(),
+		NextUpdate:          time.Now().Add(365 * 24 * time.Hour),
+		RevokedCertificates: revokedCertificates,
+		ExtraExtensions:     []pkix.Extension{},
+	}
+
+	// Define a private extension
+	bitStringExtension := pkix.Extension{
+		Id:       []int{1, 2, 3, 4, 5}, // Private OID - for bit string
+		Critical: false,
+		Value:    bitString,
+	}
+
+	// Include the private extension
+	template.ExtraExtensions = append(template.Extensions, bitStringExtension)
+
+	crlBytes, err := x509.CreateRevocationList(rand, &template, issuerCert, issuerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	pemBlock := &pem.Block{
+		Type:  "X509 CRL",
+		Bytes: crlBytes,
+	}
+
+	return pem.EncodeToMemory(pemBlock), nil
+}
+
 func loadCertificateAndKey(certPath, keyPath string) (*x509.Certificate, crypto.Signer, error) {
 	certPEM, err := os.ReadFile(certPath)
 	if err != nil {
@@ -154,10 +192,10 @@ func main() {
 
 		// Recompute the bit-string capacities
 		capacityByte := 20 * n
-		percentageRevoked := float64(0.01)
+		percentageRevoked := float64(0.1)
 		numberRevoked := int64(math.Round(float64(capacityByte*8) * percentageRevoked))
-		fmt.Printf("[i] Status list capacity (%d bytes, %d bits)\n", capacityByte, capacityByte*8)
-		fmt.Printf("[i] percentage of revoked %.2f bytes, number of revoked %d\n", percentageRevoked*100, numberRevoked)
+		// fmt.Printf("[i] Status list capacity (%d bytes, %d bits)\n", capacityByte, capacityByte*8)
+		// fmt.Printf("[i] percentage of revoked %.2f bytes, number of revoked %d\n", percentageRevoked*100, numberRevoked)
 
 		// Create a randomly populated bit string with a pre-defined number of revocations
 		bytes, _ := generateRandomNBitValue(capacityByte, int(numberRevoked))
@@ -168,33 +206,33 @@ func main() {
 		// Compress
 		bytes, _ = compress(bytes)
 
-		// Uncompress - testing purposes
-		uncompressed, _ := uncompress(bytes)
-		h = sha256.New()
-		h.Write(uncompressed)
-		// fmt.Printf("[t] digest after compression:  %x\n", h.Sum(nil))
+		// // Uncompress - testing purposes
+		// uncompressed, _ := uncompress(bytes)
+		// h = sha256.New()
+		// h.Write(uncompressed)
+		// // fmt.Printf("[t] digest after compression:  %x\n", h.Sum(nil))
 
-		chunkSize := 20
-		totalLen := len(bytes)
-		n1 := totalLen / chunkSize
+		// chunkSize := 20
+		// totalLen := len(bytes)
+		// n1 := totalLen / chunkSize
 
-		for j := 0; j < n1; j++ { // Process full 20-byte chunks
-			serial := new(big.Int).SetBytes(bytes[j*chunkSize : (j+1)*chunkSize])
-			revocationTime := time.Now()
-			reasonCode := 1 // Key Compromise
-			cm.AddOrUpdateCRLEntry(serial, revocationTime, reasonCode)
-		}
+		// for j := 0; j < n1; j++ { // Process full 20-byte chunks
+		// 	serial := new(big.Int).SetBytes(bytes[j*chunkSize : (j+1)*chunkSize])
+		// 	revocationTime := time.Now()
+		// 	reasonCode := 1 // Key Compromise
+		// 	cm.AddOrUpdateCRLEntry(serial, revocationTime, reasonCode)
+		// }
 
-		// Handle remaining bytes (if not a multiple of 20)
-		remaining := totalLen % chunkSize
-		if remaining > 0 {
-			lastChunk := make([]byte, chunkSize)       // Create a 20-byte buffer
-			copy(lastChunk, bytes[n1*chunkSize:])      // Copy remaining bytes
-			serial := new(big.Int).SetBytes(lastChunk) // Convert to big.Int
-			revocationTime := time.Now()
-			reasonCode := 1 // Key Compromise
-			cm.AddOrUpdateCRLEntry(serial, revocationTime, reasonCode)
-		}
+		// // Handle remaining bytes (if not a multiple of 20)
+		// remaining := totalLen % chunkSize
+		// if remaining > 0 {
+		// 	lastChunk := make([]byte, chunkSize)       // Create a 20-byte buffer
+		// 	copy(lastChunk, bytes[n1*chunkSize:])      // Copy remaining bytes
+		// 	serial := new(big.Int).SetBytes(lastChunk) // Convert to big.Int
+		// 	revocationTime := time.Now()
+		// 	reasonCode := 1 // Key Compromise
+		// 	cm.AddOrUpdateCRLEntry(serial, revocationTime, reasonCode)
+		// }
 
 		// Load issuer certificate and key
 		issuerCert, issuerKey, err := loadCertificateAndKey("certs/rootCA.crt", "certs/rootCA.key")
@@ -203,7 +241,12 @@ func main() {
 			return
 		}
 
-		crl, err := cm.GenerateCRL(rand.Reader, issuerCert, issuerKey)
+		// crl, err := cm.GenerateCRL(rand.Reader, issuerCert, issuerKey)
+		// if err != nil {
+		// 	fmt.Println("Error generating CRL:", err)
+		// 	return
+		// }
+		crl, err := cm.GenerateCRLBitStrinExtension(rand.Reader, issuerCert, issuerKey, bytes)
 		if err != nil {
 			fmt.Println("Error generating CRL:", err)
 			return
