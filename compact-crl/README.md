@@ -49,6 +49,8 @@ Runs a benchmark test for CRLs with the Bit Status List extension.
 Flags
 
 - `-b, --bit-string-list` → Run the Bit String CRL benchmark.
+- `-l, --lower-limit <int>` → Smallest bit string list size (10^l)
+- `-u, --upper-limit <int>` → Largest bit string list size (10^u)
 - `-c, --crt <path>` → Path to the CRL signing certificate (default: `certs/rootCA.crt`).
 - `-k, --key <path>` → Path to the CRL signing key (default: `certs/rootCA.key`).
 

@@ -18,6 +18,8 @@ func Run() {
 		bslPath   string
 		err       error
 		compress  bool
+		sizeMin   int
+		sizeMax   int
 	)
 
 	rootCmd := &cobra.Command{
@@ -35,11 +37,13 @@ func Run() {
 			// Init CRL manager
 			cm := NewCRLManager(&keyPath, &crtPath)
 			// Run the Bit String Extension benchmark
-			benchmarkCRLBitString(cm)
+			benchmarkCRLBitString(cm, sizeMin, sizeMax)
 			fmt.Println("> Benchmark finished")
 		},
 	}
 	benchmarkCmd.Flags().BoolVarP(&benchmark, "bit-string-list", "b", false, "Run the Bit String CRL benchmark")
+	benchmarkCmd.Flags().IntVarP(&sizeMin, "lower-limit", "l", 0, "Smallest bit-string list capacity 10^l")
+	benchmarkCmd.Flags().IntVarP(&sizeMax, "upper-limit", "u", 3, "Largest bit-string list capacity 10^u")
 	benchmarkCmd.Flags().StringVarP(&crtPath, "crt", "c", "certs/rootCA.crt", "Path to the CRL signing certificate")
 	benchmarkCmd.Flags().StringVarP(&keyPath, "key", "k", "certs/rootCA.key", "Path to the CRL signing key")
 

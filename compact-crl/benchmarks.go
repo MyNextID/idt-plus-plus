@@ -6,9 +6,9 @@ import (
 	"math"
 )
 
-func benchmarkCRLBitString(cm *CRLManager) {
+func benchmarkCRLBitString(cm *CRLManager, sizeMin, sizeMax int) {
 
-	for i := 0; i < 3; i++ {
+	for i := sizeMin; i < sizeMax; i++ {
 		fmt.Println("--------")
 		// Set the number of CRL entries
 		n := int(math.Pow10(i))
