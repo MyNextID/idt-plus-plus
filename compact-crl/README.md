@@ -14,8 +14,8 @@ Supported profiles
 Ensure you have Go installed, then build and install the tool:
 
 ```sh
-git clone <repository_url>
-cd ccrl
+git clone git@github.com:MyNextID/idt-plus-plus.git
+cd compact-crl
 go mod tidy
 go build
 ```
